@@ -124,7 +124,3 @@ GET /api/docs/
   - `IsAdminUser` – admin uchun.  
 - **Serializer validatsiyasi** – kiritilgan ma’lumotlarni tekshiradi.  
 
----
-
-## ✍️ Muallif
-**Ismingiz** – [GitHub profilingiz](https://github.com/username)
