@@ -3,8 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from django.db.models import Q
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiParameter
 
 from products.models import Product, Category, Tag
 from products.serializers import (
@@ -19,17 +18,20 @@ from products.serializers import (
 class ProductListView(APIView):
     permission_classes = [AllowAny]
 
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter('category', openapi.IN_QUERY, description="Toifa ID bo‘yicha filter", type=openapi.TYPE_INTEGER),
-            openapi.Parameter('tag', openapi.IN_QUERY, description="Teg ID bo‘yicha filter", type=openapi.TYPE_INTEGER),
-            openapi.Parameter('price_min', openapi.IN_QUERY, description="Minimal narx", type=openapi.TYPE_NUMBER),
-            openapi.Parameter('price_max', openapi.IN_QUERY, description="Maksimal narx", type=openapi.TYPE_NUMBER),
-            openapi.Parameter('search', openapi.IN_QUERY, description="Nomi yoki tavsifi bo‘yicha qidiruv", type=openapi.TYPE_STRING),
-            openapi.Parameter('order_by', openapi.IN_QUERY, description="Tartiblash: price, -price, name, -name", type=openapi.TYPE_STRING),
-            openapi.Parameter('page', openapi.IN_QUERY, description="Sahifa raqami", type=openapi.TYPE_INTEGER),
-            openapi.Parameter('page_size', openapi.IN_QUERY, description="Har bir sahifadagi elementlar soni", type=openapi.TYPE_INTEGER),
-        ]
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(name='category', description="Toifa ID bo‘yicha filter", required=False, type=int),
+            OpenApiParameter(name='tag', description="Teg ID bo‘yicha filter", required=False, type=int),
+            OpenApiParameter(name='price_min', description="Minimal narx", required=False, type=float),
+            OpenApiParameter(name='price_max', description="Maksimal narx", required=False, type=float),
+            OpenApiParameter(name='search', description="Nomi yoki tavsifi bo‘yicha qidiruv", required=False, type=str),
+            OpenApiParameter(name='order_by', description="Tartiblash: price, -price, name, -name", required=False, type=str),
+            OpenApiParameter(name='page', description="Sahifa raqami", required=False, type=int),
+            OpenApiParameter(name='page_size', description="Har bir sahifadagi elementlar soni", required=False, type=int),
+        ],
+        responses=OpenApiResponse(response=ProductSerializer(many=True), description="Mahsulotlar ro‘yxati"),
+        summary="Mahsulotlar ro‘yxati",
+        description="Mahsulotlarni filtrlash, qidirish va tartiblash imkoniyati bilan ro‘yxatini qaytaradi."
     )
     def get(self, request):
         queryset = Product.objects.all()
@@ -75,6 +77,11 @@ class ProductListView(APIView):
 class ProductDetailView(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        responses=ProductSerializer,
+        summary="Mahsulot tafsiloti",
+        description="Mahsulotning to‘liq ma'lumotlarini qaytaradi."
+    )
     def get(self, request, pk):
         try:
             product = Product.objects.get(pk=pk)
@@ -90,12 +97,22 @@ class CategoryListCreateView(APIView):
             return [IsAdminUser()]
         return [AllowAny()]
 
+    @extend_schema(
+        responses=CategorySerializer(many=True),
+        summary="Toifalar ro‘yxati",
+        description="Barcha mavjud toifalar ro‘yxatini qaytaradi."
+    )
     def get(self, request):
         categories = Category.objects.all()
         serializer = CategorySerializer(categories, many=True)
         return Response(serializer.data)
 
-    @swagger_auto_schema(request_body=CategorySerializer)
+    @extend_schema(
+        request=CategorySerializer,
+        responses=CategorySerializer,
+        summary="Toifa yaratish (Admin)",
+        description="Yangi toifa yaratadi."
+    )
     def post(self, request):
         serializer = CategorySerializer(data=request.data)
         if serializer.is_valid():
@@ -108,7 +125,12 @@ class CategoryListCreateView(APIView):
 class ProductAdminView(APIView):
     permission_classes = [IsAdminUser]
 
-    @swagger_auto_schema(request_body=ProductCreateUpdateSerializer)
+    @extend_schema(
+        request=ProductCreateUpdateSerializer,
+        responses=ProductSerializer,
+        summary="Mahsulot yaratish (Admin)",
+        description="Adminlar uchun yangi mahsulot yaratadi."
+    )
     def post(self, request):
         serializer = ProductCreateUpdateSerializer(data=request.data)
         if serializer.is_valid():
@@ -116,7 +138,12 @@ class ProductAdminView(APIView):
             return Response(ProductSerializer(product).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(request_body=ProductCreateUpdateSerializer)
+    @extend_schema(
+        request=ProductCreateUpdateSerializer,
+        responses=ProductSerializer,
+        summary="Mahsulotni yangilash (Admin)",
+        description="Adminlar uchun mavjud mahsulot ma'lumotlarini yangilaydi."
+    )
     def put(self, request, pk):
         try:
             product = Product.objects.get(pk=pk)
@@ -128,6 +155,11 @@ class ProductAdminView(APIView):
             return Response(ProductSerializer(product).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @extend_schema(
+        responses={204: OpenApiResponse(description="Mahsulot o‘chirildi")},
+        summary="Mahsulotni o‘chirish (Admin)",
+        description="Adminlar uchun mahsulotni o‘chiradi."
+    )
     def delete(self, request, pk):
         try:
             product = Product.objects.get(pk=pk)
@@ -140,7 +172,12 @@ class ProductAdminView(APIView):
 class CategoryDetailView(APIView):
     permission_classes = [IsAdminUser]
 
-    @swagger_auto_schema(request_body=CategorySerializer)
+    @extend_schema(
+        request=CategorySerializer,
+        responses=CategorySerializer,
+        summary="Toifani yangilash (Admin)",
+        description="Adminlar uchun mavjud toifani yangilaydi."
+    )
     def put(self, request, pk):
         try:
             category = Category.objects.get(pk=pk)
@@ -152,6 +189,11 @@ class CategoryDetailView(APIView):
             return Response(CategorySerializer(category).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @extend_schema(
+        responses={204: OpenApiResponse(description="Toifa o‘chirildi")},
+        summary="Toifani o‘chirish (Admin)",
+        description="Adminlar uchun toifani o‘chiradi."
+    )
     def delete(self, request, pk):
         try:
             category = Category.objects.get(pk=pk)
@@ -164,12 +206,22 @@ class CategoryDetailView(APIView):
 class TagListCreateView(APIView):
     permission_classes = [IsAdminUser]
 
+    @extend_schema(
+        responses=TagSerializer(many=True),
+        summary="Teglar ro‘yxati (Admin)",
+        description="Barcha mavjud teglarni ro‘yxatini qaytaradi."
+    )
     def get(self, request):
         tags = Tag.objects.all()
         serializer = TagSerializer(tags, many=True)
         return Response(serializer.data)
 
-    @swagger_auto_schema(request_body=TagSerializer)
+    @extend_schema(
+        request=TagSerializer,
+        responses=TagSerializer,
+        summary="Yangi teg yaratish (Admin)",
+        description="Adminlar uchun yangi teg yaratadi."
+    )
     def post(self, request):
         serializer = TagSerializer(data=request.data)
         if serializer.is_valid():
@@ -181,7 +233,12 @@ class TagListCreateView(APIView):
 class TagDetailView(APIView):
     permission_classes = [IsAdminUser]
 
-    @swagger_auto_schema(request_body=TagSerializer)
+    @extend_schema(
+        request=TagSerializer,
+        responses=TagSerializer,
+        summary="Tegni yangilash (Admin)",
+        description="Adminlar uchun mavjud tegni yangilaydi."
+    )
     def put(self, request, pk):
         try:
             tag = Tag.objects.get(pk=pk)
@@ -193,6 +250,11 @@ class TagDetailView(APIView):
             return Response(TagSerializer(tag).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @extend_schema(
+        responses={204: OpenApiResponse(description="Teg o‘chirildi")},
+        summary="Tegni o‘chirish (Admin)",
+        description="Adminlar uchun tegni o‘chiradi."
+    )
     def delete(self, request, pk):
         try:
             tag = Tag.objects.get(pk=pk)

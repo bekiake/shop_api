@@ -2,9 +2,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from drf_spectacular.utils import extend_schema, OpenApiResponse
+
 from cart.models import Cart, CartItem
 from cart.serializers import CartSerializer, CartItemCreateUpdateSerializer
-from drf_yasg.utils import swagger_auto_schema  # qo‘shildi
+
 
 class CartView(APIView):
     permission_classes = [IsAuthenticated]
@@ -13,14 +15,22 @@ class CartView(APIView):
         cart, created = Cart.objects.get_or_create(user=user)
         return cart
 
-    # Savatni ko‘rish
+    @extend_schema(
+        responses=CartSerializer,
+        summary="Savatni ko‘rish",
+        description="Joriy foydalanuvchining savatini ko‘rsatadi."
+    )
     def get(self, request):
         cart = self.get_cart(request.user)
         serializer = CartSerializer(cart)
         return Response(serializer.data)
 
-    # Mahsulot qo‘shish
-    @swagger_auto_schema(request_body=CartItemCreateUpdateSerializer)
+    @extend_schema(
+        request=CartItemCreateUpdateSerializer,
+        responses={201: OpenApiResponse(description="Mahsulot savatga qo‘shildi")},
+        summary="Mahsulot qo‘shish",
+        description="Foydalanuvchining savatiga yangi mahsulot qo‘shadi yoki mavjudining miqdorini oshiradi."
+    )
     def post(self, request):
         cart = self.get_cart(request.user)
         serializer = CartItemCreateUpdateSerializer(data=request.data)
@@ -37,11 +47,16 @@ class CartView(APIView):
             return Response({"detail": "Mahsulot savatga qo‘shildi"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class CartItemUpdateDeleteView(APIView):
     permission_classes = [IsAuthenticated]
 
-    # Miqdorni yangilash
-    @swagger_auto_schema(request_body=CartItemCreateUpdateSerializer)
+    @extend_schema(
+        request=CartItemCreateUpdateSerializer,
+        responses={200: OpenApiResponse(description="Miqdor yangilandi")},
+        summary="Savatdagi mahsulot miqdorini yangilash",
+        description="Foydalanuvchi savatidagi tanlangan mahsulot miqdorini yangilaydi."
+    )
     def put(self, request, pk):
         try:
             item = CartItem.objects.get(pk=pk, cart__user=request.user)
@@ -53,7 +68,11 @@ class CartItemUpdateDeleteView(APIView):
             return Response({"detail": "Miqdor yangilandi"})
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # Mahsulotni o‘chirish
+    @extend_schema(
+        responses={204: OpenApiResponse(description="Mahsulot o‘chirildi")},
+        summary="Mahsulotni o‘chirish",
+        description="Foydalanuvchi savatidan mahsulotni o‘chiradi."
+    )
     def delete(self, request, pk):
         try:
             item = CartItem.objects.get(pk=pk, cart__user=request.user)

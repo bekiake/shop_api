@@ -1,23 +1,25 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-from orders.models import Order, OrderItem
-from orders.serializers import OrderSerializer, OrderCreateSerializer, OrderStatusUpdateSerializer
-from cart.models import Cart, CartItem
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 
+from orders.models import Order
+from orders.serializers import OrderSerializer, OrderStatusUpdateSerializer
+
+# --------- Foydalanuvchi buyurtmalari ---------
 class OrderListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter('status', openapi.IN_QUERY, description="Holat bo‘yicha filter", type=openapi.TYPE_STRING),
-            openapi.Parameter('page', openapi.IN_QUERY, description="Sahifa raqami", type=openapi.TYPE_INTEGER),
-            openapi.Parameter('page_size', openapi.IN_QUERY, description="Sahifadagi elementlar soni", type=openapi.TYPE_INTEGER),
-        ]
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(name='status', description="Holat bo‘yicha filter", required=False, type=str),
+            OpenApiParameter(name='page', description="Sahifa raqami", required=False, type=int),
+            OpenApiParameter(name='page_size', description="Sahifadagi elementlar soni", required=False, type=int),
+        ],
+        responses=OpenApiResponse(response=OrderSerializer(many=True), description="Foydalanuvchi buyurtmalari ro‘yxati"),
+        summary="Foydalanuvchi buyurtmalari ro‘yxati",
+        description="Joriy foydalanuvchining barcha buyurtmalari ro‘yxatini chiqaradi. Filtrlash va sahifalash qo‘llab-quvvatlanadi."
     )
     def get(self, request):
         status_filter = request.query_params.get('status')
@@ -41,17 +43,17 @@ class OrderListCreateView(APIView):
             "results": serializer.data
         })
 
+
 class OrderDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
-                'pk', openapi.IN_PATH, 
-                description="Buyurtma ID (yo‘lda beriladi)", 
-                type=openapi.TYPE_INTEGER
-            )
-        ]
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(name='pk', location=OpenApiParameter.PATH, description="Buyurtma ID", required=True, type=int),
+        ],
+        responses=OrderSerializer,
+        summary="Foydalanuvchi buyurtma tafsilotlari",
+        description="Foydalanuvchining o‘ziga tegishli bitta buyurtma ma'lumotini ko‘rsatadi."
     )
     def get(self, request, pk):
         try:
@@ -62,18 +64,17 @@ class OrderDetailView(APIView):
         return Response(serializer.data)
 
 
+# --------- Admin buyurtmalari ---------
 class AdminOrderListView(APIView):
     permission_classes = [IsAdminUser]
 
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
-                'status',
-                openapi.IN_QUERY,
-                description="Holat bo‘yicha filter: processing, shipped, delivered",
-                type=openapi.TYPE_STRING
-            )
-        ]
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(name='status', description="Holat bo‘yicha filter: processing, shipped, delivered", required=False, type=str),
+        ],
+        responses=OrderSerializer(many=True),
+        summary="Admin uchun barcha buyurtmalar",
+        description="Barcha foydalanuvchilarning buyurtmalarini ko‘rish imkoniyati."
     )
     def get(self, request):
         status_filter = request.query_params.get('status')
@@ -87,6 +88,11 @@ class AdminOrderListView(APIView):
 class AdminOrderDetailView(APIView):
     permission_classes = [IsAdminUser]
 
+    @extend_schema(
+        responses=OrderSerializer,
+        summary="Admin uchun bitta buyurtma",
+        description="Admin bitta buyurtma tafsilotlarini ko‘rishi mumkin."
+    )
     def get(self, request, pk):
         try:
             order = Order.objects.get(pk=pk)
@@ -99,7 +105,12 @@ class AdminOrderDetailView(APIView):
 class AdminOrderStatusUpdateView(APIView):
     permission_classes = [IsAdminUser]
 
-    @swagger_auto_schema(request_body=OrderStatusUpdateSerializer)
+    @extend_schema(
+        request=OrderStatusUpdateSerializer,
+        responses={200: OpenApiResponse(description="Buyurtma holati yangilandi"), 400: OpenApiResponse(description="Xato ma'lumot")},
+        summary="Admin buyurtma holatini yangilash",
+        description="Admin buyurtma holatini (processing, shipped, delivered) yangilaydi."
+    )
     def put(self, request, pk):
         try:
             order = Order.objects.get(pk=pk)
