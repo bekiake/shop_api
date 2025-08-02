@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
-
+@extend_schema(tags=['Autentifikatsiya'])
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
@@ -42,7 +42,7 @@ class RegisterView(APIView):
                 }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+@extend_schema(tags=['Autentifikatsiya'])
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -66,7 +66,7 @@ class LoginView(APIView):
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+@extend_schema(tags=['Admin'])
 class AdminUserListView(APIView):
     permission_classes = [IsAdminUser]
 
@@ -80,7 +80,7 @@ class AdminUserListView(APIView):
         serializer = AdminUserSerializer(users, many=True)
         return Response(serializer.data)
 
-
+@extend_schema(tags=['Admin'])
 class AdminUserDetailView(APIView):
     permission_classes = [IsAdminUser]
 

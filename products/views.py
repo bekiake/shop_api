@@ -14,7 +14,7 @@ from products.serializers import (
 )
 
 # --------------------- Mijozlar uchun API ---------------------
-
+@extend_schema(tags=['Mahsulotlar'])
 class ProductListView(APIView):
     permission_classes = [AllowAny]
 
@@ -73,7 +73,7 @@ class ProductListView(APIView):
             "results": serializer.data
         })
 
-
+@extend_schema(tags=['Mahsulotlar'])
 class ProductDetailView(APIView):
     permission_classes = [AllowAny]
 
@@ -90,7 +90,7 @@ class ProductDetailView(APIView):
         serializer = ProductSerializer(product)
         return Response(serializer.data)
 
-
+@extend_schema(tags=['Mahsulotlar'])
 class CategoryListCreateView(APIView):
     def get_permissions(self):
         if self.request.method == 'POST':
@@ -108,6 +108,7 @@ class CategoryListCreateView(APIView):
         return Response(serializer.data)
 
     @extend_schema(
+        tags=['Admin'],
         request=CategorySerializer,
         responses=CategorySerializer,
         summary="Toifa yaratish (Admin)",
@@ -121,7 +122,7 @@ class CategoryListCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # --------------------- Admin uchun API ---------------------
-
+@extend_schema(tags=['Admin'])
 class ProductAdminView(APIView):
     permission_classes = [IsAdminUser]
 
@@ -168,7 +169,7 @@ class ProductAdminView(APIView):
         product.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
+@extend_schema(tags=['Admin'])
 class CategoryDetailView(APIView):
     permission_classes = [IsAdminUser]
 
@@ -202,7 +203,7 @@ class CategoryDetailView(APIView):
         category.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
+@extend_schema(tags=['Admin'])
 class TagListCreateView(APIView):
     permission_classes = [IsAdminUser]
 
@@ -229,7 +230,7 @@ class TagListCreateView(APIView):
             return Response(TagSerializer(tag).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+@extend_schema(tags=['Admin'])
 class TagDetailView(APIView):
     permission_classes = [IsAdminUser]
 

@@ -8,6 +8,7 @@ from orders.models import Order
 from orders.serializers import OrderSerializer, OrderStatusUpdateSerializer
 
 # --------- Foydalanuvchi buyurtmalari ---------
+@extend_schema(tags=['Buyurtmalar'])
 class OrderListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -43,7 +44,7 @@ class OrderListCreateView(APIView):
             "results": serializer.data
         })
 
-
+@extend_schema(tags=['Buyurtmalar'])
 class OrderDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -65,6 +66,7 @@ class OrderDetailView(APIView):
 
 
 # --------- Admin buyurtmalari ---------
+@extend_schema(tags=['Admin'])
 class AdminOrderListView(APIView):
     permission_classes = [IsAdminUser]
 
@@ -84,7 +86,7 @@ class AdminOrderListView(APIView):
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
 
-
+@extend_schema(tags=['Admin'])
 class AdminOrderDetailView(APIView):
     permission_classes = [IsAdminUser]
 
@@ -101,7 +103,7 @@ class AdminOrderDetailView(APIView):
         serializer = OrderSerializer(order)
         return Response(serializer.data)
 
-
+@extend_schema(tags=['Admin'])
 class AdminOrderStatusUpdateView(APIView):
     permission_classes = [IsAdminUser]
 

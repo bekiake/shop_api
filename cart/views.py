@@ -7,7 +7,7 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse
 from cart.models import Cart, CartItem
 from cart.serializers import CartSerializer, CartItemCreateUpdateSerializer
 
-
+@extend_schema(tags=['Savat'])
 class CartView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -47,7 +47,7 @@ class CartView(APIView):
             return Response({"detail": "Mahsulot savatga qo‘shildi"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+@extend_schema(tags=['Savat'])
 class CartItemUpdateDeleteView(APIView):
     permission_classes = [IsAuthenticated]
 

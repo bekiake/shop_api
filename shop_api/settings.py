@@ -66,16 +66,77 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
-SWAGGER_SETTINGS = {
-    'SECURITY_DEFINITIONS': {
-        'Bearer': {
-            'type': 'apiKey',
-            'name': 'Authorization',
-            'in': 'header',
-            'description': "JWT formatida kiritish: **Bearer <token>**"
-        }
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'E-commerce API',
+    'DESCRIPTION': 'E-commerce loyihasi uchun REST API dokumentatsiyasi',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'COMPONENT_NO_READ_ONLY_REQUIRED': True,
+    'ENUM_NAME_OVERRIDES': {
+        'OrderStatusEnum': 'orders.models.Order.STATUS_CHOICES',
     },
-    'USE_SESSION_AUTH': False,
+    'TAGS': [
+        {
+            'name': 'Autentifikatsiya',
+            'description': 'Foydalanuvchilar bilan bog\'liq API'
+        },
+        {
+            'name': 'Mahsulotlar',
+            'description': 'Mahsulot, kategoriya va teglar bilan bog\'liq API'
+        },
+        {
+            'name': 'Buyurtmalar',
+            'description': 'Buyurtmalar bilan bog\'liq API'
+        },
+        {
+            'name': 'Savat',
+            'description': 'Savat va savat elementlari bilan bog\'liq API'
+        },
+        {
+            'name': 'Admin',
+            'description': 'Admin uchun maxsus API'
+        }
+    ],
+    'SWAGGER_UI_SETTINGS': {
+        'persistAuthorization': True,
+        'deepLinking': True,
+        'displayOperationId': False,
+        'defaultModelsExpandDepth': 1,
+        'defaultModelExpandDepth': 1,
+        'displayRequestDuration': True,
+        'docExpansion': 'none',
+        'filter': True,
+        'showExtensions': True,
+        'showCommonExtensions': True,
+    },
+    'REDOC_UI_SETTINGS': {
+        'hideDownloadButton': False,
+        'hideHostname': False,
+        'hideLoading': False,
+        'hideSchemaPattern': True,
+        'hideSecuritySection': False,
+        'noAutoAuth': False,
+        'pathInMiddlePanel': True,
+        'requiredPropsFirst': True,
+        'scrollYOffset': 0,
+        'showExtensions': True,
+        'sortPropsAlphabetically': True,
+        'theme': {
+            'colors': {
+                'primary': {
+                    'main': '#1976d2'
+                }
+            },
+            'typography': {
+                'fontSize': '14px',
+                'lineHeight': '1.5em',
+                'code': {
+                    'fontSize': '13px'
+                }
+            }
+        }
+    }
 }
 
 MIDDLEWARE = [
